@@ -607,16 +607,16 @@
                 ),
                 React.createElement('div', { className: gameboardClass },
                     isPreview && React.createElement('div', {
-                        className: "absolute inset-0 bg-black bg-opacity-50 flex items-end justify-center z-20 rounded-lg pb-4"
+                        className: "absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20"
                     },
                         React.createElement('div', {
-                            className: "text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg"
+                            className: "text-center bg-slate-800 border border-yellow-400 px-6 py-3 rounded-lg shadow-lg"
                         },
                             React.createElement('h3', {
-                                className: "text-2xl font-bold text-yellow-300 animate-pulse"
+                                className: "text-xl font-bold text-yellow-300 animate-pulse"
                             }, "🧠 기억하세요!"),
                             React.createElement('p', {
-                                className: "text-slate-200 text-sm mt-1"
+                                className: "text-slate-300 text-sm mt-1"
                             }, "잠시 후 카드가 뒤집힙니다...")
                         )
                     ),
