@@ -192,7 +192,7 @@
             GAME_WON_ALL: 'GAME_WON_ALL',
         };
 
-        // 🔊 무서운 소리 시스템
+        // 🔊 더 무서운 소리 시스템 (짧은 시간용)
         let globalAudioContext = null;
         let isAudioEnabled = false;
 
@@ -208,7 +208,7 @@
             }
         };
 
-        const playHorrorSound = (timeLeft) => {
+        const playHorrorSound = (timeLeft, timeLimit) => {
             if (!isAudioEnabled || !globalAudioContext) return;
             
             try {
@@ -222,28 +222,30 @@
                 oscillator.connect(gainNode);
                 gainNode.connect(globalAudioContext.destination);
 
-                // 시간별 공포 사운드
-                if (timeLeft <= 3) {
-                    // 💀 죽음의 경고음
-                    oscillator.frequency.setValueAtTime(1400, globalAudioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(1800, globalAudioContext.currentTime + 0.2);
+                // 시간 비율에 따른 공포도 계산
+                const timeRatio = timeLeft / timeLimit;
+                
+                if (timeRatio <= 0.2) {  // 마지막 20%
+                    // 💀 극악의 죽음 사운드
+                    oscillator.frequency.setValueAtTime(1600, globalAudioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(2000, globalAudioContext.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.6, globalAudioContext.currentTime);
+                    oscillator.type = 'sawtooth';
+                } else if (timeRatio <= 0.4) {  // 마지막 40%
+                    // ⚠️ 매우 위험한 경고음
+                    oscillator.frequency.setValueAtTime(1200, globalAudioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1400, globalAudioContext.currentTime + 0.2);
                     gainNode.gain.setValueAtTime(0.5, globalAudioContext.currentTime);
-                    oscillator.type = 'sawtooth'; // 더 거친 소리
-                } else if (timeLeft <= 5) {
-                    // ⚠️ 위험 경고음
-                    oscillator.frequency.setValueAtTime(1000, globalAudioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(1200, globalAudioContext.currentTime + 0.15);
-                    gainNode.gain.setValueAtTime(0.4, globalAudioContext.currentTime);
                     oscillator.type = 'triangle';
-                } else if (timeLeft <= 10) {
-                    // 🚨 초기 경고음
-                    oscillator.frequency.setValueAtTime(700, globalAudioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(900, globalAudioContext.currentTime + 0.1);
-                    gainNode.gain.setValueAtTime(0.3, globalAudioContext.currentTime);
+                } else if (timeRatio <= 0.6) {  // 마지막 60%
+                    // 🚨 위험 경고음
+                    oscillator.frequency.setValueAtTime(800, globalAudioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1000, globalAudioContext.currentTime + 0.15);
+                    gainNode.gain.setValueAtTime(0.4, globalAudioContext.currentTime);
                     oscillator.type = 'square';
                 }
 
-                const duration = timeLeft <= 3 ? 0.3 : 0.2;
+                const duration = timeRatio <= 0.2 ? 0.4 : 0.2;
                 gainNode.gain.exponentialRampToValueAtTime(0.01, globalAudioContext.currentTime + duration);
                 
                 oscillator.start(globalAudioContext.currentTime);
@@ -458,7 +460,12 @@
 
             useEffect(() => {
                 if (isPreview) {
-                    const previewDuration = Math.max(2000, Math.min(5000, 1000 + levelConfig.pairs * 100));
+                    // 레벨이 높을수록 기억할 시간도 줄어듦! (더 쫄깃하게)
+                    const baseTime = 3000;
+                    const levelPenalty = (levelConfig.level - 1) * 100; // 레벨당 0.1초씩 줄어듦
+                    const pairBonus = levelConfig.pairs * 50; // 짝 개수당 0.05초 추가
+                    const previewDuration = Math.max(1500, baseTime - levelPenalty + pairBonus);
+                    
                     const timer = setTimeout(() => {
                         setCards(prev => prev.map(c => ({ ...c, isFlipped: false })));
                         setIsPreview(false);
@@ -467,7 +474,7 @@
                 }
             }, [isPreview, levelConfig]);
 
-            // 🔥 타이머 & 공포 사운드
+            // 🔥 타이머 & 공포 사운드 (시간 비율 기반)
             useEffect(() => {
                 if (isPreview || timeLeft <= 0 || matchedPairs === levelConfig.pairs) {
                     return;
@@ -475,13 +482,14 @@
 
                 const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
                 
-                // 10초 이하부터 공포 사운드 시작!
-                if (timeLeft <= 10 && timeLeft > 0) {
-                    playHorrorSound(timeLeft);
+                // 시간 비율에 따른 공포 사운드 (더 쫄깃하게!)
+                const timeRatio = timeLeft / levelConfig.timeLimit;
+                if (timeRatio <= 0.6 && timeLeft > 0) {  // 마지막 60%부터 시작!
+                    playHorrorSound(timeLeft, levelConfig.timeLimit);
                 }
                 
                 return () => clearTimeout(timer);
-            }, [isPreview, timeLeft, matchedPairs, levelConfig.pairs]);
+            }, [isPreview, timeLeft, matchedPairs, levelConfig.pairs, levelConfig.timeLimit]);
 
             useEffect(() => {
                 if (!isPreview && timeLeft === 0 && matchedPairs < levelConfig.pairs) {
@@ -599,17 +607,17 @@
                 ),
                 React.createElement('div', { className: gameboardClass },
                     isPreview && React.createElement('div', {
-                        className: "absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center z-20 rounded-lg"
+                        className: "absolute inset-0 bg-black bg-opacity-50 flex items-end justify-center z-20 rounded-lg pb-4"
                     },
                         React.createElement('div', {
-                            className: "text-center"
+                            className: "text-center bg-black bg-opacity-70 px-6 py-3 rounded-lg"
                         },
                             React.createElement('h3', {
-                                className: "text-4xl font-bold text-yellow-300 animate-pulse"
-                            }, "기억하세요! 🧠"),
+                                className: "text-2xl font-bold text-yellow-300 animate-pulse"
+                            }, "🧠 기억하세요!"),
                             React.createElement('p', {
-                                className: "text-slate-200 mt-2"
-                            }, "준비하세요...")
+                                className: "text-slate-200 text-sm mt-1"
+                            }, "잠시 후 카드가 뒤집힙니다...")
                         )
                     ),
                     React.createElement('div', {
@@ -682,10 +690,10 @@
                             }, "🧠 Memory Masters"),
                             React.createElement('p', {
                                 className: "text-slate-300 mb-4 text-lg"
-                            }, "심장이 터질뻔한 기억력 게임! 💀"),
+                            }, "레벨이 올라갈수록 시간은 줄어들고 난이도는 올라갑니다! 🔥"),
                             React.createElement('p', {
                                 className: "text-slate-400 mb-8 text-sm"
-                            }, "⚠️ 마지막 10초는... 진짜 무섭습니다 ⚠️"),
+                            }, "⚠️ 마지막 레벨은 8초만 주어집니다... 💀 ⚠️"),
                             React.createElement('button', {
                                 onClick: handleStartGame,
                                 className: "bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-xl transition-transform transform hover:scale-105"
