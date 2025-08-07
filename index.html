@@ -149,28 +149,39 @@
             '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦤', '🦚', '🦜', '🦢', '🦩'
         ];
 
-        // 레벨 구성
+        // 🔥 진짜 쫄깃한 레벨 구성 (시간은 줄어들고 난이도는 올라감!)
         const LEVEL_CONFIGS = [
-            { level: 1,  pairs: 2,  grid: [2, 2], timeLimit: 20 },
-            { level: 2,  pairs: 4,  grid: [2, 4], timeLimit: 40 },
-            { level: 3,  pairs: 6,  grid: [3, 4], timeLimit: 60 },
-            { level: 4,  pairs: 8,  grid: [4, 4], timeLimit: 80 },
-            { level: 5,  pairs: 9,  grid: [3, 6], timeLimit: 85 },
-            { level: 6,  pairs: 10, grid: [4, 5], timeLimit: 90 },
-            { level: 7,  pairs: 12, grid: [4, 6], timeLimit: 110 },
-            { level: 8,  pairs: 14, grid: [4, 7], timeLimit: 125 },
-            { level: 9,  pairs: 15, grid: [5, 6], timeLimit: 120 },
-            { level: 10, pairs: 16, grid: [4, 8], timeLimit: 130 },
-            { level: 11, pairs: 18, grid: [6, 6], timeLimit: 145 },
-            { level: 12, pairs: 20, grid: [5, 8], timeLimit: 160 },
-            { level: 13, pairs: 21, grid: [6, 7], timeLimit: 150 },
-            { level: 14, pairs: 22, grid: [4, 11], timeLimit: 155 },
-            { level: 15, pairs: 24, grid: [6, 8], timeLimit: 170 },
-            { level: 16, pairs: 25, grid: [5, 10], timeLimit: 175 },
-            { level: 17, pairs: 27, grid: [6, 9], timeLimit: 175 },
-            { level: 18, pairs: 28, grid: [7, 8], timeLimit: 180 },
-            { level: 19, pairs: 30, grid: [6, 10], timeLimit: 195 },
-            { level: 20, pairs: 32, grid: [8, 8], timeLimit: 210 },
+            // 초급 (여유로운 시작)
+            { level: 1,  pairs: 2,  grid: [2, 2], timeLimit: 25 },   // 쌤쌤
+            { level: 2,  pairs: 4,  grid: [2, 4], timeLimit: 30 },   // 여유
+            { level: 3,  pairs: 6,  grid: [3, 4], timeLimit: 35 },   // 적당
+            
+            // 중급 (긴장감 시작)
+            { level: 4,  pairs: 8,  grid: [4, 4], timeLimit: 40 },   
+            { level: 5,  pairs: 9,  grid: [3, 6], timeLimit: 38 },   // 시간 줄어들기 시작!
+            { level: 6,  pairs: 10, grid: [4, 5], timeLimit: 36 },   
+            { level: 7,  pairs: 12, grid: [4, 6], timeLimit: 34 },   
+            
+            // 고급 (진짜 어려워짐)
+            { level: 8,  pairs: 14, grid: [4, 7], timeLimit: 32 },   
+            { level: 9,  pairs: 15, grid: [5, 6], timeLimit: 30 },   
+            { level: 10, pairs: 16, grid: [4, 8], timeLimit: 28 },   
+            { level: 11, pairs: 18, grid: [6, 6], timeLimit: 26 },   
+            
+            // 고수급 (손에 땀 남)
+            { level: 12, pairs: 20, grid: [5, 8], timeLimit: 24 },   
+            { level: 13, pairs: 21, grid: [6, 7], timeLimit: 22 },   
+            { level: 14, pairs: 22, grid: [4, 11], timeLimit: 20 },  
+            { level: 15, pairs: 24, grid: [6, 8], timeLimit: 18 },   
+            
+            // 극악급 (심장 터짐 주의)
+            { level: 16, pairs: 25, grid: [5, 10], timeLimit: 16 },  // 💀
+            { level: 17, pairs: 27, grid: [6, 9], timeLimit: 14 },   // 💀💀
+            { level: 18, pairs: 28, grid: [7, 8], timeLimit: 12 },   // 💀💀💀
+            
+            // 지옥급 (인간의 한계)
+            { level: 19, pairs: 30, grid: [6, 10], timeLimit: 10 },  // 🔥💀🔥
+            { level: 20, pairs: 32, grid: [8, 8], timeLimit: 8 },    // 🔥💀👹💀🔥
         ];
 
         const GameStatus = {
