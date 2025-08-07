@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+/* 텍스트 공포 효과 */
+        .horror-text {
+            text-shadow: 0 0 10px rgba(220, 38, 38, 0.8), 0 0 20px rgba(220, 38, 38, 0.5);
+            color: #ef4444 !important;
+        }<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -123,10 +127,19 @@
         .cards-panic { animation: cards-panic 0.4s ease-in-out infinite; }
         .timer-death { animation: timer-death 0.3s ease-in-out infinite; }
 
-        /* 텍스트 공포 효과 */
-        .horror-text {
-            text-shadow: 0 0 10px rgba(220, 38, 38, 0.8), 0 0 20px rgba(220, 38, 38, 0.5);
-            color: #ef4444 !important;
+        @keyframes preview-glow {
+            0%, 100% { 
+                border-color: rgba(251, 191, 36, 0.6);
+                box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+            }
+            50% { 
+                border-color: rgba(251, 191, 36, 1);
+                box-shadow: 0 0 15px rgba(251, 191, 36, 0.7), 0 0 25px rgba(251, 191, 36, 0.3);
+            }
+        }
+        .preview-mode {
+            border: 2px solid rgba(251, 191, 36, 0.6);
+            animation: preview-glow 1.5s ease-in-out infinite;
         }
     </style>
 </head>
@@ -325,7 +338,7 @@
 
             const cardClasses = `card w-full h-full perspective-1000 ${
                 card.isFlipped || card.isMatched ? 'is-flipped' : ''
-            }`;
+            } ${isDisabled && !card.isFlipped && !card.isMatched ? 'preview-mode' : ''}`;
             const cursorClass = !isDisabled && !card.isFlipped && !card.isMatched ? 'cursor-pointer' : 'cursor-default';
 
             return React.createElement('div', {
@@ -347,18 +360,20 @@
             );
         };
 
-        const Timer = ({ timeLeft, timeLimit }) => {
+        const Timer = ({ timeLeft, timeLimit, isPreview }) => {
             const percentage = (timeLeft / timeLimit) * 100;
             
             // 공포 레벨 계산
             const horrorLevel = useMemo(() => {
+                if (isPreview) return 'PREVIEW';
                 if (percentage <= 5) return 'DEATH';      // 💀 죽음
                 if (percentage <= 15) return 'EXTREME';    // 🚨 극한
                 if (percentage <= 30) return 'DANGER';     // ⚠️ 위험
                 return 'NORMAL';
-            }, [percentage]);
+            }, [percentage, isPreview]);
 
             const barColorClass = 
+                horrorLevel === 'PREVIEW' ? 'from-yellow-400 to-amber-500' :
                 horrorLevel === 'DEATH' ? 'from-red-600 to-red-800' :
                 horrorLevel === 'EXTREME' ? 'from-red-500 to-red-700' :
                 horrorLevel === 'DANGER' ? 'from-yellow-400 to-orange-500' :
@@ -373,6 +388,15 @@
                 horrorLevel === 'DEATH' || horrorLevel === 'EXTREME' ? 'horror-text' : 'text-white'
             }`;
 
+            // 메시지 텍스트
+            const getMessage = () => {
+                if (isPreview) {
+                    const previewTime = Math.ceil((timeLeft - timeLimit) * -1);
+                    return `🧠 카드를 기억하세요! ${previewTime}초 후 시작`;
+                }
+                return `${timeLeft}초 ${horrorLevel === 'DEATH' ? '💀' : horrorLevel === 'EXTREME' ? '🚨' : ''}`;
+            };
+
             return React.createElement('div', { className: timerClass },
                 React.createElement('div', {
                     className: "flex items-center z-10 pl-2"
@@ -381,11 +405,14 @@
                     React.createElement('span', {
                         className: textClass,
                         style: { textShadow: '0 0 5px rgba(0,0,0,0.7)' }
-                    }, `${timeLeft}초 ${horrorLevel === 'DEATH' ? '💀' : horrorLevel === 'EXTREME' ? '🚨' : ''}`)
+                    }, getMessage())
                 ),
                 React.createElement('div', {
                     className: `absolute left-0 top-0 h-full rounded-full bg-gradient-to-r ${barColorClass} transition-all duration-300`,
-                    style: { width: `${Math.max(0, percentage)}%` }
+                    style: { 
+                        width: isPreview ? '100%' : `${Math.max(0, percentage)}%`,
+                        opacity: isPreview ? 0.8 : 1
+                    }
                 })
             );
         };
