@@ -29,18 +29,44 @@
             transform: rotateY(180deg);
         }
 
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                filter: brightness(1);
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        .shake-animation {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes danger-glow {
+            0%, 100% { 
+                box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+                border-color: rgb(239, 68, 68);
             }
-            50% {
-                transform: scale(1.02);
-                filter: brightness(1.1);
+            50% { 
+                box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 0 30px rgba(239, 68, 68, 0.6);
+                border-color: rgb(248, 113, 113);
             }
         }
-        .is-critical {
-            animation: pulse 1.5s infinite ease-in-out;
+        .danger-mode {
+            animation: danger-glow 1s ease-in-out infinite;
+            border: 2px solid transparent;
+        }
+        
+        @keyframes screen-flash {
+            0%, 100% { background-color: rgb(15, 23, 42); }
+            50% { background-color: rgba(239, 68, 68, 0.1); }
+        }
+        .screen-flash {
+            animation: screen-flash 0.8s ease-in-out infinite;
+        }
+
+        @keyframes card-danger {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); filter: brightness(1.1); }
+        }
+        .cards-danger {
+            animation: card-danger 0.6s ease-in-out infinite;
         }
 
         @keyframes fade-in-up {
@@ -216,7 +242,7 @@
             const timerBarClasses = `
                 absolute left-0 top-0 h-full rounded-full bg-gradient-to-r ${barColorClass}
                 transition-all duration-300
-                ${isCritical ? 'is-critical' : ''}
+                ${isCritical ? 'shake-animation' : ''}
             `;
 
             return React.createElement('div', {
@@ -313,16 +339,9 @@
 
                 const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
                 
-                // 10초 이하일 때 긴장감 있는 비프음
+                // 10초 이하일 때 긴장감 MAX!
                 if (timeLeft <= 10 && timeLeft > 0) {
-                    try {
-                        // 남은 시간이 적을수록 높은 주파수와 빠른 간격
-                        const frequency = 400 + (10 - timeLeft) * 100; // 400Hz에서 1300Hz까지
-                        const duration = 0.1 + (10 - timeLeft) * 0.02; // 점점 길어지는 소리
-                        createBeepSound(frequency, duration);
-                    } catch (e) {
-                        console.warn("Audio play failed:", e);
-                    }
+                    playTenseSound(timeLeft);
                 }
                 
                 return () => clearTimeout(timer);
@@ -397,8 +416,17 @@
                 gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`
             }), [cols, rows]);
 
+            // 긴장감 레벨 계산
+            const tensionLevel = useMemo(() => {
+                const timePercentage = (timeLeft / levelConfig.timeLimit) * 100;
+                if (timePercentage <= 10) return 'EXTREME'; // 마지막 10%
+                if (timePercentage <= 25) return 'HIGH';    // 25%
+                if (timePercentage <= 50) return 'MEDIUM';  // 50%
+                return 'LOW';
+            }, [timeLeft, levelConfig.timeLimit]);
+
             return React.createElement('div', {
-                className: "w-full max-w-5xl mx-auto p-4 flex flex-col items-center"
+                className: `w-full max-w-5xl mx-auto p-4 flex flex-col items-center ${tensionLevel === 'EXTREME' ? 'screen-flash' : ''}`
             },
                 React.createElement('div', {
                     className: "w-full flex justify-between items-center mb-4 px-2"
@@ -428,7 +456,7 @@
                     })
                 ),
                 React.createElement('div', {
-                    className: "w-full aspect-video p-2 bg-slate-800 rounded-lg shadow-inner relative"
+                    className: `w-full aspect-video p-2 bg-slate-800 rounded-lg shadow-inner relative ${tensionLevel === 'HIGH' || tensionLevel === 'EXTREME' ? 'danger-mode' : ''}`
                 },
                     isPreview && React.createElement('div', {
                         className: "absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center z-20 rounded-lg"
@@ -445,7 +473,7 @@
                         )
                     ),
                     React.createElement('div', {
-                        className: "grid gap-2 md:gap-3 w-full h-full",
+                        className: `grid gap-2 md:gap-3 w-full h-full ${tensionLevel === 'EXTREME' ? 'cards-danger' : ''} ${tensionLevel === 'HIGH' ? 'shake-animation' : ''}`,
                         style: gridStyle
                     },
                         cards.map((card) =>
@@ -515,12 +543,19 @@
                             }, "Test your memory against the clock. Can you beat all 20 levels?"),
                             React.createElement('button', {
                                 onClick: () => {
-                                    // 사용자 상호작용으로 오디오 컨텍스트 활성화
-                                    try {
-                                        const testContext = new (window.AudioContext || window.webkitAudioContext)();
-                                        testContext.resume();
-                                    } catch (e) {
-                                        console.log("Audio context activation attempted");
+                                    // 확실한 오디오 활성화
+                                    if (typeof window !== 'undefined') {
+                                        document.addEventListener('click', function initAudio() {
+                                            try {
+                                                if (!audioContext) {
+                                                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                                                }
+                                                audioContext.resume();
+                                                document.removeEventListener('click', initAudio);
+                                            } catch (e) {
+                                                console.log("Audio initialization attempted");
+                                            }
+                                        }, { once: true });
                                     }
                                     handleStartGame();
                                 },
