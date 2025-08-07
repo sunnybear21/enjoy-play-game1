@@ -1,795 +1,171 @@
-/* 텍스트 공포 효과 */
-        .horror-text {
-            text-shadow: 0 0 10px rgba(220, 38, 38, 0.8), 0 0 20px rgba(220, 38, 38, 0.5);
-            color: #ef4444 !important;
-        }<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memory Masters - 심장 터질뻔한 카드게임</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
-        /* 카드 뒤집기 애니메이션 */
-        .card-inner {
-            transform-style: preserve-3d;
-            transition: transform 0.6s;
-        }
-        .card.is-flipped .card-inner {
-            transform: rotateY(180deg);
-        }
-        .card-front, .card-back {
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-        }
-        .card-back {
-            transform: rotateY(180deg);
-        }
-
-        /* 기본 페이드인 */
-        @keyframes fade-in-up {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .animate-fade-in-up {
-            animation: fade-in-up 0.4s ease-out forwards;
-        }
-
-        /* 💀 공포 효과들 💀 */
-        @keyframes horror-shake {
-            0%, 100% { transform: translate(0); }
-            10% { transform: translate(-2px, -1px) rotate(-0.5deg); }
-            20% { transform: translate(2px, 1px) rotate(0.5deg); }
-            30% { transform: translate(-1px, 2px) rotate(-0.5deg); }
-            40% { transform: translate(2px, -1px) rotate(0.5deg); }
-            50% { transform: translate(-2px, 1px) rotate(-0.5deg); }
-            60% { transform: translate(1px, 2px) rotate(0.5deg); }
-            70% { transform: translate(-1px, -2px) rotate(-0.5deg); }
-            80% { transform: translate(2px, 1px) rotate(0.5deg); }
-            90% { transform: translate(-2px, -1px) rotate(-0.5deg); }
-        }
-        
-        @keyframes extreme-shake {
-            0%, 100% { transform: translate(0); }
-            5% { transform: translate(-4px, -2px) rotate(-1deg); }
-            10% { transform: translate(4px, 2px) rotate(1deg); }
-            15% { transform: translate(-3px, 3px) rotate(-0.8deg); }
-            20% { transform: translate(3px, -2px) rotate(0.8deg); }
-            25% { transform: translate(-4px, 2px) rotate(-1deg); }
-            30% { transform: translate(2px, 4px) rotate(1deg); }
-            35% { transform: translate(-2px, -4px) rotate(-0.8deg); }
-            40% { transform: translate(4px, 2px) rotate(0.8deg); }
-            45% { transform: translate(-4px, 2px) rotate(-1deg); }
-            50% { transform: translate(3px, -3px) rotate(1deg); }
-            55% { transform: translate(-3px, 4px) rotate(-0.8deg); }
-            60% { transform: translate(2px, -4px) rotate(0.8deg); }
-            65% { transform: translate(-4px, -2px) rotate(-1deg); }
-            70% { transform: translate(4px, 3px) rotate(1deg); }
-            75% { transform: translate(-2px, -4px) rotate(-0.8deg); }
-            80% { transform: translate(3px, 2px) rotate(0.8deg); }
-            85% { transform: translate(-4px, 3px) rotate(-1deg); }
-            90% { transform: translate(2px, -3px) rotate(1deg); }
-            95% { transform: translate(-3px, -2px) rotate(-0.8deg); }
-        }
-
-        @keyframes blood-flash {
-            0%, 100% { background-color: rgb(15, 23, 42); }
-            50% { background-color: rgba(220, 38, 38, 0.3); }
-        }
-
-        @keyframes death-glow {
-            0%, 100% { 
-                box-shadow: 0 0 10px rgba(220, 38, 38, 0.6);
-                border-color: rgb(220, 38, 38);
-            }
-            50% { 
-                box-shadow: 0 0 30px rgba(220, 38, 38, 0.9), 0 0 50px rgba(220, 38, 38, 0.7);
-                border-color: rgb(248, 113, 113);
-            }
-        }
-
-        @keyframes cards-panic {
-            0%, 100% { transform: scale(1); filter: brightness(1); }
-            25% { transform: scale(1.01) rotate(0.2deg); filter: brightness(1.1); }
-            50% { transform: scale(1.02); filter: brightness(1.2); }
-            75% { transform: scale(1.01) rotate(-0.2deg); filter: brightness(1.1); }
-        }
-
-        @keyframes timer-death {
-            0%, 100% { transform: scale(1); }
-            25% { transform: scale(1.05) rotate(1deg); }
-            50% { transform: scale(1.1); }
-            75% { transform: scale(1.05) rotate(-1deg); }
-        }
-
-        /* 공포 클래스들 */
-        .horror-shake { animation: horror-shake 0.5s ease-in-out infinite; }
-        .extreme-shake { animation: extreme-shake 0.3s ease-in-out infinite; }
-        .blood-flash { animation: blood-flash 0.6s ease-in-out infinite; }
-        .death-glow { 
-            animation: death-glow 0.8s ease-in-out infinite;
-            border: 3px solid transparent;
-        }
-        .cards-panic { animation: cards-panic 0.4s ease-in-out infinite; }
-        .timer-death { animation: timer-death 0.3s ease-in-out infinite; }
-
-        @keyframes preview-glow {
-            0%, 100% { 
-                border-color: rgba(251, 191, 36, 0.6);
-                box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
-            }
-            50% { 
-                border-color: rgba(251, 191, 36, 1);
-                box-shadow: 0 0 15px rgba(251, 191, 36, 0.7), 0 0 25px rgba(251, 191, 36, 0.3);
-            }
-        }
-        .preview-mode {
-            border: 2px solid rgba(251, 191, 36, 0.6);
-            animation: preview-glow 1.5s ease-in-out infinite;
-        }
-    </style>
-</head>
-<body class="bg-slate-900 text-white font-sans">
-    <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useCallback, useEffect, useMemo } = React;
-
-        // 동물 이모지들
-        const EMOJIS = [
-            '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
-            '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
-            '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋',
-            '🐌', '🐞', '🐜', '🦟', '🦗', '🕷', '🦂', '🐢', '🐍', '🦎',
-            '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟',
-            '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧',
-            '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄',
-            '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮',
-            '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦤', '🦚', '🦜', '🦢', '🦩'
-        ];
-
-        // 🔥 진짜 쫄깃한 레벨 구성 (시간은 줄어들고 난이도는 올라감!)
-        const LEVEL_CONFIGS = [
-            // 초급 (여유로운 시작)
-            { level: 1,  pairs: 2,  grid: [2, 2], timeLimit: 25 },   // 쌤쌤
-            { level: 2,  pairs: 4,  grid: [2, 4], timeLimit: 30 },   // 여유
-            { level: 3,  pairs: 6,  grid: [3, 4], timeLimit: 35 },   // 적당
-            
-            // 중급 (긴장감 시작)
-            { level: 4,  pairs: 8,  grid: [4, 4], timeLimit: 40 },   
-            { level: 5,  pairs: 9,  grid: [3, 6], timeLimit: 38 },   // 시간 줄어들기 시작!
-            { level: 6,  pairs: 10, grid: [4, 5], timeLimit: 36 },   
-            { level: 7,  pairs: 12, grid: [4, 6], timeLimit: 34 },   
-            
-            // 고급 (진짜 어려워짐)
-            { level: 8,  pairs: 14, grid: [4, 7], timeLimit: 32 },   
-            { level: 9,  pairs: 15, grid: [5, 6], timeLimit: 30 },   
-            { level: 10, pairs: 16, grid: [4, 8], timeLimit: 28 },   
-            { level: 11, pairs: 18, grid: [6, 6], timeLimit: 26 },   
-            
-            // 고수급 (손에 땀 남)
-            { level: 12, pairs: 20, grid: [5, 8], timeLimit: 24 },   
-            { level: 13, pairs: 21, grid: [6, 7], timeLimit: 22 },   
-            { level: 14, pairs: 22, grid: [4, 11], timeLimit: 20 },  
-            { level: 15, pairs: 24, grid: [6, 8], timeLimit: 18 },   
-            
-            // 극악급 (심장 터짐 주의)
-            { level: 16, pairs: 25, grid: [5, 10], timeLimit: 16 },  // 💀
-            { level: 17, pairs: 27, grid: [6, 9], timeLimit: 14 },   // 💀💀
-            { level: 18, pairs: 28, grid: [7, 8], timeLimit: 12 },   // 💀💀💀
-            
-            // 지옥급 (인간의 한계)
-            { level: 19, pairs: 30, grid: [6, 10], timeLimit: 10 },  // 🔥💀🔥
-            { level: 20, pairs: 32, grid: [8, 8], timeLimit: 8 },    // 🔥💀👹💀🔥
-        ];
-
-        const GameStatus = {
-            NOT_STARTED: 'NOT_STARTED',
-            PLAYING: 'PLAYING',
-            LEVEL_CLEARED: 'LEVEL_CLEARED',
-            GAME_OVER: 'GAME_OVER',
-            GAME_WON_ALL: 'GAME_WON_ALL',
-        };
-
-        // 🔊 더 무서운 소리 시스템 (짧은 시간용)
-        let globalAudioContext = null;
-        let isAudioEnabled = false;
-
-        const initAudio = () => {
-            if (!globalAudioContext && typeof window !== 'undefined') {
-                try {
-                    globalAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    isAudioEnabled = true;
-                    console.log("오디오 활성화 성공! 🔊");
-                } catch (e) {
-                    console.log("오디오 초기화 실패:", e);
-                }
-            }
-        };
-
-        const playHorrorSound = (timeLeft, timeLimit) => {
-            if (!isAudioEnabled || !globalAudioContext) return;
-            
-            try {
-                if (globalAudioContext.state === 'suspended') {
-                    globalAudioContext.resume();
-                }
-
-                const oscillator = globalAudioContext.createOscillator();
-                const gainNode = globalAudioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(globalAudioContext.destination);
-
-                // 시간 비율에 따른 공포도 계산
-                const timeRatio = timeLeft / timeLimit;
-                
-                if (timeRatio <= 0.2) {  // 마지막 20%
-                    // 💀 극악의 죽음 사운드
-                    oscillator.frequency.setValueAtTime(1600, globalAudioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(2000, globalAudioContext.currentTime + 0.3);
-                    gainNode.gain.setValueAtTime(0.6, globalAudioContext.currentTime);
-                    oscillator.type = 'sawtooth';
-                } else if (timeRatio <= 0.4) {  // 마지막 40%
-                    // ⚠️ 매우 위험한 경고음
-                    oscillator.frequency.setValueAtTime(1200, globalAudioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(1400, globalAudioContext.currentTime + 0.2);
-                    gainNode.gain.setValueAtTime(0.5, globalAudioContext.currentTime);
-                    oscillator.type = 'triangle';
-                } else if (timeRatio <= 0.6) {  // 마지막 60%
-                    // 🚨 위험 경고음
-                    oscillator.frequency.setValueAtTime(800, globalAudioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(1000, globalAudioContext.currentTime + 0.15);
-                    gainNode.gain.setValueAtTime(0.4, globalAudioContext.currentTime);
-                    oscillator.type = 'square';
-                }
-
-                const duration = timeRatio <= 0.2 ? 0.4 : 0.2;
-                gainNode.gain.exponentialRampToValueAtTime(0.01, globalAudioContext.currentTime + duration);
-                
-                oscillator.start(globalAudioContext.currentTime);
-                oscillator.stop(globalAudioContext.currentTime + duration);
-            } catch (e) {
-                console.log("사운드 재생 실패:", e);
-            }
-        };
-
-        // 컴포넌트들
-        const QuestionMarkIcon = () => (
-            React.createElement('svg', {
-                xmlns: "http://www.w3.org/2000/svg",
-                className: "h-1/2 w-1/2 text-slate-400",
-                fill: "none",
-                viewBox: "0 0 24 24",
-                stroke: "currentColor"
-            },
-            React.createElement('path', {
-                strokeLinecap: "round",
-                strokeLinejoin: "round",
-                strokeWidth: 2,
-                d: "M8.228 9c.09-.977.546-1.873 1.262-2.587C10.215 5.699 11.11 5.243 12.086 5.142c.976-.1 1.951.158 2.761.728.81.57 1.392 1.417 1.654 2.38.25 1 0 2-.5 2.75s-1.25 1.5-2 2-1.5 1.75-1.5 2.75"
-            }),
-            React.createElement('path', {
-                d: "M12 19.01L12.01 18.999",
-                stroke: "currentColor",
-                strokeWidth: "2",
-                strokeLinecap: "round",
-                strokeLinejoin: "round"
-            }))
-        );
-
-        const TimerIcon = () => (
-            React.createElement('svg', {
-                xmlns: "http://www.w3.org/2000/svg",
-                className: "h-6 w-6 mr-2 text-sky-400",
-                fill: "none",
-                viewBox: "0 0 24 24",
-                stroke: "currentColor"
-            },
-            React.createElement('path', {
-                strokeLinecap: "round",
-                strokeLinejoin: "round",
-                strokeWidth: 2,
-                d: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            }))
-        );
-
-        const RestartIcon = () => (
-            React.createElement('svg', {
-                xmlns: "http://www.w3.org/2000/svg",
-                className: "h-5 w-5 text-slate-300",
-                fill: "none",
-                viewBox: "0 0 24 24",
-                stroke: "currentColor",
-                strokeWidth: 2
-            },
-            React.createElement('path', {
-                strokeLinecap: "round",
-                strokeLinejoin: "round",
-                d: "M4 4v5h5M20 20v-5h-5"
-            }),
-            React.createElement('path', {
-                strokeLinecap: "round",
-                strokeLinejoin: "round",
-                d: "M4 9a9 9 0 0114.65-4.65l1.35 1.35M20 15a9 9 0 01-14.65 4.65l-1.35-1.35"
-            }))
-        );
-
-        const Card = ({ card, onClick, isDisabled }) => {
-            const handleClick = () => {
-                if (!isDisabled && !card.isFlipped && !card.isMatched) {
-                    onClick(card.id);
-                }
-            };
-
-            const cardClasses = `card w-full h-full perspective-1000 ${
-                card.isFlipped || card.isMatched ? 'is-flipped' : ''
-            } ${isDisabled && !card.isFlipped && !card.isMatched ? 'preview-mode' : ''}`;
-            const cursorClass = !isDisabled && !card.isFlipped && !card.isMatched ? 'cursor-pointer' : 'cursor-default';
-
-            return React.createElement('div', {
-                className: cardClasses,
-                onClick: handleClick
-            },
-                React.createElement('div', {
-                    className: `card-inner relative w-full h-full ${cursorClass}`
-                },
-                    React.createElement('div', {
-                        className: "card-front absolute w-full h-full rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition-colors duration-300"
-                    },
-                        React.createElement(QuestionMarkIcon)
-                    ),
-                    React.createElement('div', {
-                        className: `card-back absolute w-full h-full rounded-lg flex items-center justify-center text-4xl md:text-5xl ${card.isMatched ? 'bg-emerald-500' : 'bg-blue-500'}`
-                    }, card.value)
-                )
-            );
-        };
-
-        const Timer = ({ timeLeft, timeLimit, isPreview }) => {
-            const percentage = (timeLeft / timeLimit) * 100;
-            
-            // 공포 레벨 계산
-            const horrorLevel = useMemo(() => {
-                if (isPreview) return 'PREVIEW';
-                if (percentage <= 5) return 'DEATH';      // 💀 죽음
-                if (percentage <= 15) return 'EXTREME';    // 🚨 극한
-                if (percentage <= 30) return 'DANGER';     // ⚠️ 위험
-                return 'NORMAL';
-            }, [percentage, isPreview]);
-
-            const barColorClass = 
-                horrorLevel === 'PREVIEW' ? 'from-yellow-400 to-amber-500' :
-                horrorLevel === 'DEATH' ? 'from-red-600 to-red-800' :
-                horrorLevel === 'EXTREME' ? 'from-red-500 to-red-700' :
-                horrorLevel === 'DANGER' ? 'from-yellow-400 to-orange-500' :
-                'from-green-500 to-cyan-500';
-
-            const timerClass = `w-full bg-slate-700 rounded-full h-8 p-1 flex items-center relative overflow-hidden shadow-inner ${
-                horrorLevel === 'DEATH' ? 'timer-death' : 
-                horrorLevel === 'EXTREME' ? 'horror-shake' : ''
-            }`;
-
-            const textClass = `font-bold text-sm ${
-                horrorLevel === 'DEATH' || horrorLevel === 'EXTREME' ? 'horror-text' : 'text-white'
-            }`;
-
-            // 메시지 텍스트
-            const getMessage = () => {
-                if (isPreview) {
-                    const previewTime = Math.ceil((timeLeft - timeLimit) * -1);
-                    return `🧠 카드를 기억하세요! ${previewTime}초 후 시작`;
-                }
-                return `${timeLeft}초 ${horrorLevel === 'DEATH' ? '💀' : horrorLevel === 'EXTREME' ? '🚨' : ''}`;
-            };
-
-            return React.createElement('div', { className: timerClass },
-                React.createElement('div', {
-                    className: "flex items-center z-10 pl-2"
-                },
-                    React.createElement(TimerIcon),
-                    React.createElement('span', {
-                        className: textClass,
-                        style: { textShadow: '0 0 5px rgba(0,0,0,0.7)' }
-                    }, getMessage())
-                ),
-                React.createElement('div', {
-                    className: `absolute left-0 top-0 h-full rounded-full bg-gradient-to-r ${barColorClass} transition-all duration-300`,
-                    style: { 
-                        width: isPreview ? '100%' : `${Math.max(0, percentage)}%`,
-                        opacity: isPreview ? 0.8 : 1
-                    }
-                })
-            );
-        };
-
-        const Modal = ({ title, children }) => {
-            return React.createElement('div', {
-                className: "fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-            },
-                React.createElement('div', {
-                    className: "bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full mx-auto transform animate-fade-in-up"
-                },
-                    React.createElement('h2', {
-                        className: "text-3xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500"
-                    }, title),
-                    React.createElement('div', {
-                        className: "space-y-4"
-                    }, children)
-                )
-            );
-        };
-
-        // 셔플 함수
-        const shuffleArray = (array) => {
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
-        };
-
-        const GameBoard = ({ levelConfig, onLevelComplete, onGameOver, onRestartRequest }) => {
-            const [cards, setCards] = useState([]);
-            const [flippedIndices, setFlippedIndices] = useState([]);
-            const [matchedPairs, setMatchedPairs] = useState(0);
-            const [isChecking, setIsChecking] = useState(false);
-            const [isPreview, setIsPreview] = useState(true);
-            const [timeLeft, setTimeLeft] = useState(levelConfig.timeLimit);
-
-            const [rows, cols] = levelConfig.grid;
-
-            const generateCards = useCallback((config) => {
-                const selectedEmojis = shuffleArray(EMOJIS).slice(0, config.pairs);
-                const cardValues = shuffleArray([...selectedEmojis, ...selectedEmojis]);
-                return cardValues.map((value, index) => ({
-                    id: index,
-                    value,
-                    isFlipped: true,
-                    isMatched: false,
-                }));
-            }, []);
-
-            // 공포 레벨 계산
-            const horrorLevel = useMemo(() => {
-                if (matchedPairs === levelConfig.pairs) return 'NORMAL'; // 완료시 정상
-                
-                const percentage = (timeLeft / levelConfig.timeLimit) * 100;
-                if (percentage <= 5) return 'DEATH';      // 💀
-                if (percentage <= 15) return 'EXTREME';    // 🚨  
-                if (percentage <= 30) return 'DANGER';     // ⚠️
-                return 'NORMAL';
-            }, [timeLeft, levelConfig.timeLimit, matchedPairs]);
-
-            useEffect(() => {
-                setCards(generateCards(levelConfig));
-                setMatchedPairs(0);
-                setFlippedIndices([]);
-                setIsChecking(false);
-                setIsPreview(true);
-                setTimeLeft(levelConfig.timeLimit);
-            }, [levelConfig, generateCards]);
-
-            useEffect(() => {
-                if (isPreview) {
-                    // 레벨이 높을수록 기억할 시간도 줄어듦! (더 쫄깃하게)
-                    const baseTime = 3000;
-                    const levelPenalty = (levelConfig.level - 1) * 100; // 레벨당 0.1초씩 줄어듦
-                    const pairBonus = levelConfig.pairs * 50; // 짝 개수당 0.05초 추가
-                    const previewDuration = Math.max(1500, baseTime - levelPenalty + pairBonus);
-                    
-                    const timer = setTimeout(() => {
-                        setCards(prev => prev.map(c => ({ ...c, isFlipped: false })));
-                        setIsPreview(false);
-                    }, previewDuration);
-                    return () => clearTimeout(timer);
-                }
-            }, [isPreview, levelConfig]);
-
-            // 🔥 타이머 & 공포 사운드 (시간 비율 기반)
-            useEffect(() => {
-                if (isPreview || timeLeft <= 0 || matchedPairs === levelConfig.pairs) {
-                    return;
-                }
-
-                const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-                
-                // 시간 비율에 따른 공포 사운드 (더 쫄깃하게!)
-                const timeRatio = timeLeft / levelConfig.timeLimit;
-                if (timeRatio <= 0.6 && timeLeft > 0) {  // 마지막 60%부터 시작!
-                    playHorrorSound(timeLeft, levelConfig.timeLimit);
-                }
-                
-                return () => clearTimeout(timer);
-            }, [isPreview, timeLeft, matchedPairs, levelConfig.pairs, levelConfig.timeLimit]);
-
-            useEffect(() => {
-                if (!isPreview && timeLeft === 0 && matchedPairs < levelConfig.pairs) {
-                    onGameOver();
-                }
-            }, [timeLeft, isPreview, onGameOver, matchedPairs, levelConfig.pairs]);
-
-            useEffect(() => {
-                if (matchedPairs === levelConfig.pairs && levelConfig.pairs > 0) {
-                    const timer = setTimeout(() => {
-                        onLevelComplete();
-                    }, 1000);
-                    return () => clearTimeout(timer);
-                }
-            }, [matchedPairs, levelConfig.pairs, onLevelComplete]);
-
-            useEffect(() => {
-                if (flippedIndices.length < 2) return;
-
-                setIsChecking(true);
-                const [firstIndex, secondIndex] = flippedIndices;
-
-                const timer = setTimeout(() => {
-                    setCards(prevCards => {
-                        const card1 = prevCards[firstIndex];
-                        const card2 = prevCards[secondIndex];
-
-                        if (card1.value === card2.value) {
-                            setMatchedPairs(prev => prev + 1);
-                            return prevCards.map(card =>
-                                card.value === card1.value ? { ...card, isMatched: true } : card
-                            );
-                        } else {
-                            return prevCards.map((card, index) =>
-                                index === firstIndex || index === secondIndex ? { ...card, isFlipped: false } : card
-                            );
-                        }
-                    });
-                    setFlippedIndices([]);
-                    setIsChecking(false);
-                }, 800);
-
-                return () => clearTimeout(timer);
-            }, [flippedIndices]);
-
-            const handleCardClick = useCallback((id) => {
-                if (isChecking || isPreview) return;
-
-                setCards(prevCards => {
-                    const flippedUnmatched = prevCards.filter(c => c.isFlipped && !c.isMatched).length;
-                    if (flippedUnmatched >= 2) return prevCards;
-
-                    const cardIndex = prevCards.findIndex(c => c.id === id);
-                    if (cardIndex === -1 || prevCards[cardIndex].isFlipped || prevCards[cardIndex].isMatched) {
-                        return prevCards;
-                    }
-
-                    setFlippedIndices(prev => [...prev, cardIndex]);
-
-                    const newCards = [...prevCards];
-                    newCards[cardIndex] = { ...newCards[cardIndex], isFlipped: true };
-                    return newCards;
-                });
-            }, [isChecking, isPreview]);
-
-            const gridStyle = useMemo(() => ({
-                gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`
-            }), [cols, rows]);
-
-            // 메인 컨테이너 클래스
-            const mainContainerClass = `w-full max-w-5xl mx-auto p-4 flex flex-col items-center ${
-                horrorLevel === 'DEATH' ? 'blood-flash' : ''
-            }`;
-
-            // 게임판 클래스
-            const gameboardClass = `w-full aspect-video p-2 bg-slate-800 rounded-lg shadow-inner relative ${
-                horrorLevel === 'EXTREME' ? 'death-glow extreme-shake' : 
-                horrorLevel === 'DANGER' ? 'death-glow horror-shake' : ''
-            }`;
-
-            // 카드 그리드 클래스
-            const gridClass = `grid gap-2 md:gap-3 w-full h-full ${
-                horrorLevel === 'DEATH' ? 'cards-panic extreme-shake' :
-                horrorLevel === 'EXTREME' ? 'cards-panic' : ''
-            }`;
-
-            return React.createElement('div', { className: mainContainerClass },
-                React.createElement('div', {
-                    className: "w-full flex justify-between items-center mb-4 px-2"
-                },
-                    React.createElement('h2', {
-                        className: `text-2xl font-bold ${horrorLevel === 'DEATH' || horrorLevel === 'EXTREME' ? 'horror-text' : 'text-sky-300'}`
-                    }, `레벨 ${levelConfig.level}`),
-                    React.createElement('div', {
-                        className: "flex items-center space-x-4"
-                    },
-                        React.createElement('div', {
-                            className: `text-xl font-semibold ${horrorLevel === 'DEATH' || horrorLevel === 'EXTREME' ? 'horror-text' : ''}`
-                        }, `${matchedPairs} / ${levelConfig.pairs} 짝`),
-                        React.createElement('button', {
-                            onClick: onRestartRequest,
-                            className: "p-2 rounded-full bg-slate-700 hover:bg-slate-600 transition-colors",
-                            title: "처음부터 다시"
-                        }, React.createElement(RestartIcon))
-                    )
-                ),
-                React.createElement('div', {
-                    className: "w-full mb-6 relative"
-                },
-                    React.createElement(Timer, {
-                        timeLeft: timeLeft,
-                        timeLimit: levelConfig.timeLimit
-                    })
-                ),
-                React.createElement('div', { className: gameboardClass },
-                    isPreview && React.createElement('div', {
-                        className: "absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20"
-                    },
-                        React.createElement('div', {
-                            className: "text-center bg-slate-800 border border-yellow-400 px-6 py-3 rounded-lg shadow-lg"
-                        },
-                            React.createElement('h3', {
-                                className: "text-xl font-bold text-yellow-300 animate-pulse"
-                            }, "🧠 기억하세요!"),
-                            React.createElement('p', {
-                                className: "text-slate-300 text-sm mt-1"
-                            }, "잠시 후 카드가 뒤집힙니다...")
-                        )
-                    ),
-                    React.createElement('div', {
-                        className: gridClass,
-                        style: gridStyle
-                    },
-                        cards.map((card) =>
-                            React.createElement(Card, {
-                                key: card.id,
-                                card: card,
-                                onClick: handleCardClick,
-                                isDisabled: isChecking || isPreview
-                            })
-                        )
-                    )
-                )
-            );
-        };
-
-        const App = () => {
-            const [gameStatus, setGameStatus] = useState(GameStatus.NOT_STARTED);
-            const [currentLevel, setCurrentLevel] = useState(1);
-            const [gameInstance, setGameInstance] = useState(0);
-
-            const maxLevel = LEVEL_CONFIGS.length;
-
-            const handleStartGame = () => {
-                // 🔊 오디오 초기화 (확실하게!)
-                initAudio();
-                
-                setCurrentLevel(1);
-                setGameStatus(GameStatus.PLAYING);
-                setGameInstance(prev => prev + 1);
-            };
-
-            const handleNextLevel = () => {
-                if (currentLevel < maxLevel) {
-                    setCurrentLevel(prev => prev + 1);
-                    setGameStatus(GameStatus.PLAYING);
-                } else {
-                    setGameStatus(GameStatus.GAME_WON_ALL);
-                }
-            };
-
-            const handleTryAgain = () => {
-                setGameStatus(GameStatus.PLAYING);
-                setGameInstance(prev => prev + 1);
-            };
-
-            const handleLevelComplete = useCallback(() => {
-                if (currentLevel === maxLevel) {
-                    setGameStatus(GameStatus.GAME_WON_ALL);
-                } else {
-                    setGameStatus(GameStatus.LEVEL_CLEARED);
-                }
-            }, [currentLevel, maxLevel]);
-
-            const handleGameOver = useCallback(() => {
-                setGameStatus(GameStatus.GAME_OVER);
-            }, []);
-
-            const renderContent = () => {
-                switch (gameStatus) {
-                    case GameStatus.NOT_STARTED:
-                        return React.createElement('div', {
-                            className: "text-center"
-                        },
-                            React.createElement('h1', {
-                                className: "text-5xl md:text-7xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-600"
-                            }, "🧠 Memory Masters"),
-                            React.createElement('p', {
-                                className: "text-slate-300 mb-4 text-lg"
-                            }, "레벨이 올라갈수록 시간은 줄어들고 난이도는 올라갑니다! 🔥"),
-                            React.createElement('p', {
-                                className: "text-slate-400 mb-8 text-sm"
-                            }, "⚠️ 마지막 레벨은 8초만 주어집니다... 💀 ⚠️"),
-                            React.createElement('button', {
-                                onClick: handleStartGame,
-                                className: "bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-xl transition-transform transform hover:scale-105"
-                            }, "🎮 게임 시작 (소리 ON)")
-                        );
-                    case GameStatus.PLAYING:
-                        return React.createElement(GameBoard, {
-                            key: `${currentLevel}-${gameInstance}`,
-                            levelConfig: LEVEL_CONFIGS[currentLevel - 1],
-                            onLevelComplete: handleLevelComplete,
-                            onGameOver: handleGameOver,
-                            onRestartRequest: handleStartGame
-                        });
-                    case GameStatus.LEVEL_CLEARED:
-                        return React.createElement(Modal, {
-                            title: `🎉 레벨 ${currentLevel} 클리어!`
-                        },
-                            React.createElement('p', {
-                                className: "text-center text-slate-300"
-                            }, "훌륭해요! 다음 레벨은 더 어려워집니다... 😈"),
-                            React.createElement('button', {
-                                onClick: handleNextLevel,
-                                className: "w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105"
-                            }, "다음 레벨 💪")
-                        );
-                    case GameStatus.GAME_OVER:
-                        return React.createElement(Modal, {
-                            title: "💀 게임 오버"
-                        },
-                            React.createElement('p', {
-                                className: "text-center text-slate-300"
-                            }, "시간 초과! 너무 무서웠나요? ㅋㅋ"),
-                            React.createElement('div', {
-                                className: "flex space-x-4"
-                            },
-                                React.createElement('button', {
-                                    onClick: handleTryAgain,
-                                    className: "w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105"
-                                }, "재도전 🔥"),
-                                React.createElement('button', {
-                                    onClick: handleStartGame,
-                                    className: "w-full bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105"
-                                }, "처음부터 🔄")
-                            )
-                        );
-                    case GameStatus.GAME_WON_ALL:
-                        return React.createElement(Modal, {
-                            title: "🏆 축하합니다!"
-                        },
-                            React.createElement('p', {
-                                className: "text-center text-slate-300"
-                            }, `진정한 메모리 마스터! ${maxLevel}개 레벨 모두 클리어! 🎊`),
-                            React.createElement('button', {
-                                onClick: handleStartGame,
-                                className: "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-transform transform hover:scale-105"
-                            }, "다시 도전 🎮")
-                        );
-                }
-            };
-
-            return React.createElement('main', {
-                className: "min-h-screen w-full flex items-center justify-center p-4 bg-slate-900"
-            }, renderContent());
-        };
-
-        // 앱 렌더링
-        const rootElement = document.getElementById('root');
-        const root = ReactDOM.createRoot(rootElement);
-        root.render(React.createElement(App));
-    </script>
-</body>
-</html>
+<p data-ke-size="size16">&nbsp;</p>
+
+<div>
+
+<style>
+
+    body {
+
+      background-color: #FFFDE7;
+
+      font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+
+      color: #333;
+
+      line-height: 1.7;
+
+      padding: 20px;
+
+    }
+
+
+
+    h2.gem-h2 {
+
+      font-size: 1.8em;
+
+      color: #FFB300;
+
+      border-left: 5px solid #FFB300;
+
+      padding-left: 12px;
+
+      margin-top: 2em;
+
+    }
+
+
+
+    h3.gem-h3 {
+
+      font-size: 1.4em;
+
+      color: #FFA000;
+
+      margin-top: 1.5em;
+
+    }
+
+
+
+    .gem-highlight {
+
+      background: linear-gradient(transparent 60%, #FFF59D 60%);
+
+      font-weight: bold;
+
+    }
+
+
+
+    .gem-info-box-teal,
+
+    .gem-info-box-yellow,
+
+    .gem-disclaimer-box {
+
+      background-color: #FFF9C4;
+
+      border-left: 6px solid #FFEB3B;
+
+      padding: 15px;
+
+      margin: 20px 0;
+
+      border-radius: 10px;
+
+      font-size: 0.95em;
+
+    }
+
+
+
+    .gem-info-box-teal b,
+
+    .gem-info-box-yellow b {
+
+      color: #F57F17;
+
+    }
+
+
+
+    .gem-faq-item {
+
+      background-color: #FFFDE7;
+
+      border-left: 4px solid #FFB74D;
+
+      padding: 15px;
+
+      margin-top: 20px;
+
+      border-radius: 8px;
+
+    }
+
+
+
+    .gem-faq-item .question {
+
+      font-weight: bold;
+
+      color: #F57F17;
+
+      margin-bottom: 8px;
+
+    }
+
+
+
+    a {
+
+      color: #FF8F00;
+
+      text-decoration: underline dotted;
+
+      transition: all 0.2s;
+
+    }
+
+
+
+    a:hover {
+
+      color: #EF6C00;
+
+      background-color: #FFF9C4;
+
+    }
+
+
+
+    iframe {
+
+      margin-top: 10px;
+
+      margin-bottom: 10px;
+
+      border: 2px solid #FFE082;
+
+      border-radius: 12px;
+
+      width: 100%;
+
+      height:150vh;
+
+      max-height: 800px;
+
+    }
+
+
+
+    iframe:hover {
+
+      box-shadow: 0 0 20px rgba(255, 213, 79, 0.4);
+
+    }
+
+  </style>
+
+</div>
