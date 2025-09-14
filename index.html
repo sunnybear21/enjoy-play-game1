@@ -131,6 +131,32 @@
             text-shadow: 0 0 10px rgba(220, 38, 38, 0.8), 0 0 20px rgba(220, 38, 38, 0.5);
             color: #ef4444 !important;
         }
+        #game-footer {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    z-index: 1000;
+}
+
+@media (max-height: 600px) {
+    #game-footer {
+        bottom: 5px;
+        padding: 8px 12px;
+        gap: 8px;
+    }
+    #game-footer span,
+    #game-footer a {
+        font-size: 12px !important;
+    }
+}
     </style>
 </head>
 <body class="bg-slate-900 text-white font-sans">
@@ -749,15 +775,15 @@
         const root = ReactDOM.createRoot(rootElement);
         root.render(React.createElement(App));
     </script>
-    <!-- Footer Credit -->
-  <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: 
-  center; gap: 10px; background: rgba(0, 0, 0, 0.8); padding: 10px 15px; border-radius: 8px; border: 1px solid   
-  rgba(102, 126, 234, 0.3); z-index: 1000;">
-      <span style="color: rgba(255,255,255,0.8); font-size: 14px;">Made by SunnyBear</span>
-      <span style="color: rgba(255,255,255,0.4); font-size: 14px;">|</span>
-      <a href="https://wonusdwant.tistory.com" target="_blank" style="color: rgba(102, 126, 234, 0.9); 
-  text-decoration: none; font-size: 14px;">wonusdwant.tistory.com</a>
-  </div>
+<div id="game-footer">
+    <span style="color: rgba(255,255,255,0.8);">Made by SunnyBear</span>
+    <span style="color: rgba(255,255,255,0.4);">|</span>
+    <a href="https://wonusdwant.tistory.com" target="_blank" 
+       style="color: rgba(102, 126, 234, 0.9); text-decoration: none;">
+       wonusdwant.tistory.com
+    </a>
+</div>
 </body>
 </html>
+
 
